@@ -140,7 +140,7 @@ def process_data(experiment):
 
     try:
         with branch.transact(commit_message="Update processed data") as tx:
-            for file, filename in zip([X_train, X_test, y_train, y_test], ['X_train', 'X_test', 'y_train', 'y_test']):
+            for file, filename in zip([X_train, X_test, y_train, y_test, df], ['X_train', 'X_test', 'y_train', 'y_test', 'df']):
                 tx.object(f'processed/{filename}.csv').upload(file.to_csv(sep=";", index=False))
     except TransactionException as inst:
         # continue if commit no changes

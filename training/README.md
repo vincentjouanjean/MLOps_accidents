@@ -19,6 +19,8 @@ docker compose build
 docker compose up
 ```
 
+Go to LakeFS URL and create `accidents` repository (URL and credentials are defined in `docker-compose.yaml` file).
+
 # 1. Launch new experiment
 
 Run `1_import_experiment.http` with admin account.
