@@ -1,0 +1,146 @@
+services:
+  init-model-api:
+    build:
+      context: ./src/init
+      dockerfile: ./Dockerfile
+    ports:
+      - 8084:80
+    environment:
+      KAFKA_HOST: "kafka:9093"
+      KAFKA_GROUP_ID: "init_step"
+      ISS: "http://login-api:80"
+    depends_on:
+      - init-kafka
+    networks:
+      - mle
+
+  import-model:
+    build:
+      context: ./src/data
+      dockerfile: ./Dockerfile
+    environment:
+      LAKE_FS_HOST: "lake-fs:8000"
+      LAKE_FS_USERNAME: "AKIAIOSFOLQUICKSTART"
+      LAKE_FS_PASSWORD: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+      KAFKA_HOST: "kafka:9093"
+      KAFKA_GROUP_ID: "import-data"
+      KAFKA_OFFSET: "earliest"
+      INPUT_TOPIC_NAME: "init_step"
+      OUTPUT_TOPIC_NAME: "making_dataset_step"
+    depends_on:
+      - init-kafka
+    networks:
+      - mle
+
+  make-dataset:
+    build:
+      context: ./src/make_dataset
+      dockerfile: ./Dockerfile
+    environment:
+      LAKE_FS_HOST: "lake-fs:8000"
+      LAKE_FS_USERNAME: "AKIAIOSFOLQUICKSTART"
+      LAKE_FS_PASSWORD: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+      KAFKA_HOST: "kafka:9093"
+      KAFKA_GROUP_ID: "make_dataset"
+      KAFKA_OFFSET: "earliest"
+      INPUT_TOPIC_NAME: "making_dataset_step"
+      OUTPUT_TOPIC_NAME: "training_step"
+    depends_on:
+      - init-kafka
+    networks:
+      - mle
+
+  training:
+    build: ./src/mlflow
+    ports:
+      - "8082:80"
+      - "5000:5000"
+    environment:
+      ISS: "http://login-api:80"
+      LAKE_FS_HOST: "lake-fs:8000"
+      LAKE_FS_USERNAME: "AKIAIOSFOLQUICKSTART"
+      LAKE_FS_PASSWORD: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+      KAFKA_HOST: "kafka:9093"
+      KAFKA_GROUP_ID: "training"
+      KAFKA_OFFSET: "earliest"
+      REDIS_URL: redis
+    depends_on:
+      - init-kafka
+    networks:
+      - mle
+
+  kafka:
+    image: apache/kafka-native
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      # Configure listeners for both docker and host communication
+      KAFKA_LISTENERS: CONTROLLER://localhost:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT
+
+      # Settings required for KRaft mode
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9091
+
+      # Listener to use for broker-to-broker communication
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+
+      # Required for a single node cluster
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - mle
+
+  init-kafka:
+    image: confluentinc/cp-kafka:7.7.2
+    depends_on:
+      - kafka
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      kafka-topics --bootstrap-server kafka:9093 --create --if-not-exists --topic init_step --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka:9093 --create --if-not-exists --topic making_dataset_step --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka:9093 --create --if-not-exists --topic training_step --replication-factor 1 --partitions 1
+      "
+    networks:
+      - mle
+
+  kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:latest
+    ports:
+      - 8081:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9093
+    depends_on:
+      - kafka
+    networks:
+      - mle
+
+
+  lake-fs:
+    image: treeverse/lakefs:latest
+    ports:
+      - 8083:8000
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        lakefs run --quickstart
+    networks:
+      - mle
+
+  redis:
+    image: 'redis'
+    ports:
+      - "6379:6379"
+    networks:
+      - mle
+
+networks:
+  mle:
+    name: mle
+    external: true
