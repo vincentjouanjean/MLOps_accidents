@@ -1,0 +1,1 @@
+from .impl.prediction_repository_impl import PredictionRepositoryImpl
