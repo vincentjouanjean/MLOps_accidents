@@ -1,0 +1,37 @@
+services:
+  prediction-api:
+    build: .
+    ports:
+      - "8085:80"
+    environment:
+      ISS: http://login-api:80
+      DATABASE_CONNECTION: mongodb://mongodb:mongodb@mongo:27017
+      REDIS_URL: redis
+    networks:
+      - mle
+    depends_on:
+      mongo:
+        condition: service_started
+
+  mongo:
+    ports:
+      - '27017:27017'
+    container_name: mongodb
+    restart: always
+    logging:
+      options:
+        max-size: 1g
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongodb
+      - MONGO_INITDB_ROOT_PASSWORD=mongodb
+    image: mongo
+    networks:
+      - mle
+
+volumes:
+  pgdata:
+
+networks:
+  mle:
+    name: mle
+    external: true

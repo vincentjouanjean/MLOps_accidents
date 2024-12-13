@@ -1,0 +1,1 @@
+from .impl.predict_repository_impl import PredictRepositoryImpl
