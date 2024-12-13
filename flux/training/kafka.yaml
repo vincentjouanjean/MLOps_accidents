@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: training
+spec:
+  selector:
+    matchLabels:
+      app: kafka
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: apache/kafka-native:latest
+#          env:
+#            - name: KAFKA_LISTENERS
+#              value: "CONTROLLER://localhost:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093"
+#            - name: KAFKA_ADVERTISED_LISTENERS
+#              value: "HOST://localhost:9092,DOCKER://kafka:9093"
+#            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+#              value: "CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT"
+          ports:
+            - containerPort: 9092
+            - containerPort: 9093
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-init
+  namespace: training
+spec:
+  selector:
+    matchLabels:
+      app: kafka-init
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kafka-init
+    spec:
+      containers:
+        - name: kafka-init
+          image: confluentinc/cp-kafka:7.7.2
+          command: [
+            "kafka-topics --bootstrap-server kafka:9093 --create --if-not-exists --topic init_step --replication-factor 1 --partitions 1",
+            "kafka-topics --bootstrap-server kafka:9093 --create --if-not-exists --topic making_dataset_step --replication-factor 1 --partitions 1",
+            "kafka-topics --bootstrap-server kafka:9093 --create --if-not-exists --topic training_step --replication-factor 1 --partitions 1"
+          ]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-ui
+  namespace: training
+spec:
+  selector:
+    matchLabels:
+      app: kafka-ui
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kafka-ui
+    spec:
+      containers:
+        - name: kafka-init
+          image: ghcr.io/kafbat/kafka-ui:latest
+          env:
+            - name: DYNAMIC_CONFIG_ENABLED
+              value: "true"
+            - name: KAFKA_CLUSTERS_0_NAME
+              value: "local"
+            - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
+              value: "kafka:9093"
+          ports:
+            - containerPort: 9092
+            - containerPort: 9093
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: training
+spec:
+  selector:
+    app: kafka
+  ports:
+    - name: broker
+      protocol: TCP
+      port: 9092
+      targetPort: 9092
+    - name: config
+      protocol: TCP
+      port: 9093
+      targetPort: 9093
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-ui
+  namespace: training
+spec:
+  selector:
+    app: kafka-ui
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

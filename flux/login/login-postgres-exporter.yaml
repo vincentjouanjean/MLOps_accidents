@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: login-postgres-exporter
+  namespace: login
+spec:
+  selector:
+    matchLabels:
+      app: login-postgres-exporter
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: login-postgres-exporter
+    spec:
+      containers:
+        - name: login-postgres-exporter
+          image: prometheuscommunity/postgres-exporter:latest
+          env:
+            - name: DATA_SOURCE_NAME
+              value: "postgresql://login:login@login-postgres:5432/login?sslmode=disable"
+          ports:
+            - containerPort: 9187
+              name: metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: login-postgres-exporter
+  namespace: login
+spec:
+  selector:
+    app: login-postgres-exporter
+  ports:
+    - protocol: TCP
+      port: 9187
+      targetPort: 9187

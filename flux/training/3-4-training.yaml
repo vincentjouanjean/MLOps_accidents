@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: training
+  namespace: training
+spec:
+  selector:
+    matchLabels:
+      app: training
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: training
+    spec:
+      containers:
+        - name: training
+          image: localhost:5000/training-training:latest
+          env:
+            - name: ISS
+              value: "http://login-api"
+            - name: LAKE_FS_HOST
+              value: "lake-fs:8000"
+            - name: LAKE_FS_USERNAME
+              value: "AKIAIOSFOLQUICKSTART"
+            - name: LAKE_FS_PASSWORD
+              value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            - name: KAFKA_HOST
+              value: "kafka:9093"
+            - name: KAFKA_GROUP_ID
+              value: "training"
+            - name: KAFKA_OFFSET
+              value: "earliest"
+            - name: REDIS_URL
+              value: "redis"
+          ports:
+            - containerPort: 80
+            - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: training
+  namespace: training
+spec:
+  selector:
+    app: training
+  ports:
+    - name: api
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: mlflow
+      protocol: TCP
+      port: 5000
+      targetPort: 5000

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: 1-import-model
+  namespace: training
+spec:
+  selector:
+    matchLabels:
+      app: 1-import-model
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: 1-import-model
+    spec:
+      containers:
+        - name: 1-import-model
+          image: localhost:5000/training-import-model:latest
+          env:
+            - name: LAKE_FS_HOST
+              value: "lake-fs:8000"
+            - name: LAKE_FS_USERNAME
+              value: "AKIAIOSFOLQUICKSTART"
+            - name: LAKE_FS_PASSWORD
+              value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            - name: KAFKA_HOST
+              value: "kafka:9093"
+            - name: KAFKA_GROUP_ID
+              value: "import-data"
+            - name: KAFKA_OFFSET
+              value: "earliest"
+            - name: INPUT_TOPIC_NAME
+              value: "init_step"
+            - name: OUTPUT_TOPIC_NAME
+              value: "making_dataset_step"
