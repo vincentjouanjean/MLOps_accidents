@@ -57,6 +57,9 @@ workspace "Name" "Description" {
                     training_model -> mlflow "push" "experiment"
                     training_api -> mlflow "model selection" "http"
                     training_api -> mlflow "load" "sdk"
+                    training_model -> training_api {
+                        tags "step"
+                    }
                 }
                 init -> extract {
                     tags "step"
@@ -98,7 +101,6 @@ workspace "Name" "Description" {
             front = container "Web Application" "Use of the prediction model" "Vue"
             bff = container "Back for frontend" "Creates separate backend services to be consumed by frontend applications" "Python"
             predictAPI = container "Prediction API (retrieve scoring, historique, update model, MLflow)" -> TODO
-            adminAPI = container "Admin API"
             predict_db = container "Prediction Database" {
                 tags "Database"
             }
@@ -106,10 +108,6 @@ workspace "Name" "Description" {
 
             bff -> loginss.loginAPI "read/write" "http"
             bff -> predictAPI "read/write" "http"
-            bff -> adminAPI "read/write" "http"
-
-            adminAPI -> loginss.loginAPI "read/write" "http"
-            adminAPI -> predict_db "read/write" "sql"
 
             predictAPI -> loginss.loginAPI "read" "http"
             predictAPI -> predict_db "read/write" "sql"
