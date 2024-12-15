@@ -18,7 +18,7 @@ spec:
           image: localhost:5000/login-login-api:latest
           env:
             - name: ISS
-              value: "http://login-api"
+              value: "http://login-api.login"
             - name: DATABASE_CONNECTION
               value: "postgresql://login:login@login-postgres:5432"
             - name: PYWAY_DATABASE_MIGRATION_DIR

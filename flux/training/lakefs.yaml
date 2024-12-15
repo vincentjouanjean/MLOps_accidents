@@ -16,9 +16,11 @@ spec:
       containers:
         - name: lakefs
           image: treeverse/lakefs:latest
-          command: [
-            "lakefs run --quickstart"
-          ]
+          args:
+            [
+              'run',
+              '--quickstart'
+            ]
           ports:
             - containerPort: 8000
 ---
@@ -28,6 +30,7 @@ metadata:
   name: lakefs
   namespace: training
 spec:
+  type: NodePort
   selector:
     app: lakefs
   ports:

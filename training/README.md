@@ -2,22 +2,28 @@
 
 The training system allows to generate a new version of the model using the recovery of new data.
 
-![img.png](c4.png)
+![img.png](c4_lvl2.png)
 
 # Training container
 
-The "training" container contains the MLFlow software package and system integration components :
+The `training` container contains the MLFlow software package and system integration components :
 - Generation of new training experiment and push it in MLFlow repository
 - Deployment of the experiment to a new version of the final model to Redis
 
 ![img.png](c4_lvl3.png)
 
-# Run application
+# Build application
 
 ```bash
-docker compose build
-docker compose up
+  docker compose build
 ```
+
+# Run application in local
+
+```bash
+  docker compose up
+```
+
 
 Go to LakeFS URL and create `accidents` repository (URL and credentials are defined in `docker-compose.yaml` file).
 

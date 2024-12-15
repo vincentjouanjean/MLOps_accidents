@@ -43,6 +43,10 @@ data:
         scrape_interval: 15s
         static_configs:
           - targets: ['login-postgres-exporter.login:9187']
+      - job_name: 'api-prediction-exporter'
+        scrape_interval: 15s
+        static_configs:
+          - targets: ['prediction-api.api:80']
 ---
 apiVersion: apps/v1
 kind: Deployment

@@ -18,7 +18,7 @@ spec:
           image: localhost:5000/training-init-model-api:latest
           env:
             - name: ISS
-              value: "http://login-api"
+              value: "http://login-api.login"
             - name: KAFKA_GROUP_ID
               value: "init_step"
             - name: KAFKA_HOST

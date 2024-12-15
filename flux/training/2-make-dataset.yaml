@@ -18,7 +18,7 @@ spec:
           image: localhost:5000/training-make-dataset:latest
           env:
             - name: LAKE_FS_HOST
-              value: "lake-fs:8000"
+              value: "lakefs:8000"
             - name: LAKE_FS_USERNAME
               value: "AKIAIOSFOLQUICKSTART"
             - name: LAKE_FS_PASSWORD

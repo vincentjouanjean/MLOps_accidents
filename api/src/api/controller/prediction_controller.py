@@ -43,6 +43,22 @@ def get_current_user(
     return token_decode.get('sub')
 
 
+def get_admin_user(
+        request: Request,
+):
+    token = request.headers.get('Authorization')
+    token_decode = AccidentJWTBearerTokenValidator.authenticate_token(
+        AccidentJWTBearerTokenValidator(issuer=ISS, resource_server=ISS),
+        codecs.encode(token)
+    )
+    AccidentJWTBearerTokenValidator.validate_token(
+        AccidentJWTBearerTokenValidator(issuer=ISS, resource_server=ISS),
+        token=token_decode,
+        scopes=['admin'],
+        request='')
+    return token_decode.get('sub')
+
+
 @app.post("/predicts")
 async def predicts(
         accident_dto: AccidentDto,
@@ -84,6 +100,6 @@ async def predicts(
 
 @app.get("/predictions")
 async def predictions(
-        current_user: Annotated[str, Depends(get_current_user)]
+        current_admin: Annotated[str, Depends(get_admin_user)]
 ) -> List:
     return prediction_service.get_all()

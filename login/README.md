@@ -4,14 +4,18 @@ The Login application allows to create users from the admin user, generate a log
 
 The application is built on a hexagonal architecture and has 1 left API adapter exposing the endpoints with FastAPI and 2 right adapters, JDBC repository allowing the storage of user data in PostgreSQL and a technical brick JWT repository allowing the generation of tokens.
 
-![img.png](c4.png)
+![img.png](login_c4_lvl3.png)
 
-
-# Run application
+# Build application
 
 ```bash
-docker build .
-docker compose up
+  docker compose build
+```
+
+# Run application in local
+
+```bash
+  docker compose up
 ```
 
 # Create Admin user
