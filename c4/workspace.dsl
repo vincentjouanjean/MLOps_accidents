@@ -34,7 +34,7 @@ workspace "Name" "Description" {
         }
         train_software_system = softwareSystem "Apprentissage du modèle de prédiction de la gravité des accidents de la route" {
             group steps {
-                init = container "0. Run a new experiment API" "http" "Python" {
+                init = container "0. Training launcher" "Expose endpoint to run a new experiment" "Python" {
                     tags "Python", "FastAPI"
                 }
                 extract = container "1. Extract data" "Extract data from external system and save it in repository" "Python" {
@@ -43,7 +43,7 @@ workspace "Name" "Description" {
                 transform = container "2. Transform data" "Transform data and save it in repository" "Python" {
                     tags "Python"
                 }
-                training = container "3. & 4. Model training / Repository" "Model training, save experiments, and manage deploiement workflow" "Python" {
+                training = container "3. & 4. Model training / Model Repository" "Model training, save experiments, and manage deploiement workflow" "Python" {
                     tags "Python"
                     training_model = component "3. Training model" "Training model and push experiment to repository" "Python" {
                         tags "Python"
@@ -71,24 +71,24 @@ workspace "Name" "Description" {
                     tags "step"
                 }
             }
-            lakefs = container "LakeFS" "Data repository" "LakeFS" {
+            lakefs = container "Data repository" "Store training data" "LakeFS" {
                 tags "ExternalTool"
             }
 
-            streaming = container "Streaming" "Use it to sequence the model workflow" "Kafka" {
+            streaming = container "Streaming" "Use it to sequence the model training workflow" "Kafka" {
                 tags "Streaming"
             }
 
-            redis = container "Redis" "Manage deploiements and deploiement workflow" "Redis" {
+            redis = container "Expose model" "Store the lastest version of the model" "Redis" {
                 tags "Database"
             }
 
-            init -> streaming "produce" "kafka"
-            extract -> streaming "consume/produce" "kafka"
-            extract -> streaming "produce" "kafka"
-            transform -> streaming "consume" "kafka"
-            transform -> streaming "produce" "kafka"
-            training.training_model -> streaming "consume" "kafka"
+            init -> streaming "produce" "streaming"
+            extract -> streaming "consume/produce" "streaming"
+            extract -> streaming "produce" "streaming"
+            transform -> streaming "consume" "streaming"
+            transform -> streaming "produce" "streaming"
+            training.training_model -> streaming "consume" "streaming"
 
             extract -> lakefs "push data" "http"
             transform -> lakefs "read&push data/pull request" "http"
@@ -98,10 +98,35 @@ workspace "Name" "Description" {
             training.training_api -> redis "cache model" "http"
         }
         service_sofware_system = softwareSystem "Service de prédiction de la gravité des accidents de la route" {
-            front = container "Web Application" "Use of the prediction model" "Vue"
-            bff = container "Back for frontend" "Creates separate backend services to be consumed by frontend applications" "Python"
-            predictAPI = container "Prediction API (retrieve scoring, historique, update model, MLflow)" -> TODO
-            predict_db = container "Prediction Database" {
+            front = container "Web Application" "IHM" "Vue" {
+                tags "TODO"
+            }
+            bff = container "Back for frontend" "Separate backend services to frontend application" "Python" {
+                tags "TODO"
+            }
+            predictAPI = container "Prediction API" "Use model to predict and store history in dedicated database" {
+                tags "Python"
+                main = component "Runner" {
+                    tags "Python"
+                }
+                api = component "API" "FastAPI" {
+                    tags "Python", "FastAPI"
+                }
+                domain = component "Domain" "Python" {
+                    tags "Python", "domain"
+                }
+                repository_jdbc = component "JDBC repository" "sqlalchemy" {
+                    tags "Python", "sqlalchemy"
+                }
+                repository_predict = component "Prediction repository" "sklearn/redis" {
+                    tags "Python"
+                }
+                main -> api "uses" "Python"
+                api -> domain "calls" "Python"
+                repository_jdbc -> domain "implements" "sqlalchemy"
+                repository_predict -> domain "implements" "sklearn/redis"
+            }
+            predict_db = container "Prediction Database" "Store history" "MongoDB" {
                 tags "Database"
             }
             front -> bff "Uses"
@@ -110,16 +135,16 @@ workspace "Name" "Description" {
             bff -> predictAPI "read/write" "http"
 
             predictAPI -> loginss.loginAPI "read" "http"
-            predictAPI -> predict_db "read/write" "sql"
-            predictAPI -> train_software_system.redis "copy model" "docker"
+            predictAPI.repository_jdbc -> predict_db "read/write" "sql"
+            predictAPI.repository_predict -> train_software_system.redis "load model" "http"
         }
 
-        policier -> service_sofware_system.front "Uses" "Get prediction"
-        admin -> service_sofware_system.front "Show historique/statistique"
-        admin -> train_software_system.training.training_api "Choose model version / Update model cache"
+        policier -> service_sofware_system.front "Get prediction" "web"
+        admin -> service_sofware_system.front "Show history" "web"
+        admin -> train_software_system.training.training_api "Chose model" "web"
         admin -> train_software_system.init "write" "http"
-        admin -> train_software_system.lakefs "read" "web"
-        admin -> train_software_system.training.mlflow "Visualize metrics" "web"
+        admin -> train_software_system.lakefs "read/compare data" "web"
+        admin -> train_software_system.training.mlflow "Visualize models and metrics" "web"
     }
 
     views {
@@ -147,6 +172,11 @@ workspace "Name" "Description" {
                 train_software_system.training
                 train_software_system.redis
             }
+        }
+
+        component service_sofware_system.predictAPI "service_sofware_system_Level_3" {
+            include *
+            autolayout lr
         }
 
         container train_software_system "train_software_system_Level_2" {
@@ -223,6 +253,10 @@ workspace "Name" "Description" {
             element "Python" {
                 shape pipe
                 background #ff008f
+            }
+            element "TODO" {
+                shape pipe
+                background #555555
             }
         }
     }

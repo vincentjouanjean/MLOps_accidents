@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: 2-make-dataset
+  namespace: training
+spec:
+  selector:
+    matchLabels:
+      app: 2-make-dataset
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: 2-make-dataset
+    spec:
+      containers:
+        - name: 2-make-dataset
+          image: localhost:5000/training-make-dataset:latest
+          env:
+            - name: LAKE_FS_HOST
+              value: "lakefs:8000"
+            - name: LAKE_FS_USERNAME
+              value: "AKIAIOSFOLQUICKSTART"
+            - name: LAKE_FS_PASSWORD
+              value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            - name: KAFKA_HOST
+              value: "kafka:9093"
+            - name: KAFKA_GROUP_ID
+              value: "make-dataset"
+            - name: KAFKA_OFFSET
+              value: "earliest"
+            - name: INPUT_TOPIC_NAME
+              value: "making_dataset_step"
+            - name: OUTPUT_TOPIC_NAME
+              value: "training_step"

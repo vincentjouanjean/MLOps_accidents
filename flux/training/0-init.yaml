@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: init-api
+  namespace: training
+spec:
+  selector:
+    matchLabels:
+      app: init-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: init-api
+    spec:
+      containers:
+        - name: init-api
+          image: localhost:5000/training-init-model-api:latest
+          env:
+            - name: ISS
+              value: "http://login-api.login"
+            - name: KAFKA_GROUP_ID
+              value: "init_step"
+            - name: KAFKA_HOST
+              value: "kafka:9093"
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: init-api
+  namespace: training
+spec:
+  selector:
+    app: init-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
