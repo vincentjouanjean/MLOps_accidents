@@ -18,13 +18,7 @@ A history is store in dedicated mongo database and the consult is allowed only f
   docker compose up
 ```
 
-# Create Admin user
-
-```curl
-curl -X POST --location "http://127.0.0.1:8000/admins" \
-    -H "Content-Type: application/json"
-```
-
 # Tests
 
-Run `creation_request.http` to test connexion, creation and token validation.
+Run `1_prediction_true.http` or `2_prediction_false.http` to test prediction.
+`3_get_all.http` return history for admin user.

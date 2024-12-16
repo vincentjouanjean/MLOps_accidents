@@ -53,12 +53,12 @@ Show [README.md deployment](flux/README.md) document
 - Implements BFF
 - Implements frontend
 - Refactor Prediction API to build solid domain object
-- Add coverage tests
+- Add others unit tests to improve coverage
 
 ## Deployment
 - Deploy Vault for credentials
-- Deploy Kafka correctly (with registry, Zookeeper or managed)
-- Deploy lakeFS correctly (with dedicated database or managed)
+- Deploy Kafka prod ready (with registry, Zookeeper or managed)
+- Deploy lakeFS prod ready (with dedicated database or managed)
 - Run load tests to set cpu, memory resources and adjust replicas number
 - Use FluxCD
 
